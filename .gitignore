@@ -1,0 +1,26 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# pdfs 
+*.pdf
+
+# Virtual environments
+.venv
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+# Logs
+*.log
+
+# Folders 
+Surgical-Tools-Detection-1/
+runs/
+crack_detection/
+
+# pt files 
+*.pt

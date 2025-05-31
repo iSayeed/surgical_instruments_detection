@@ -1,0 +1,14 @@
+[project]
+name = "lynqo"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "albumentations>=2.0.8",
+    "ipykernel>=6.29.5",
+    "opencv-python>=4.11.0.86",
+    "roboflow>=1.1.65",
+    "ultralytics>=8.3.146",
+    "wandb>=0.19.11",
+]
