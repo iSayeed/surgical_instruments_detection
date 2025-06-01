@@ -30,27 +30,9 @@ class SurgicalToolsGUI:
         self.create_widgets()
 
     def create_widgets(self):
-        # Create notebook (tab control)
-        self.notebook = ttk.Notebook(self.root)
-        self.notebook.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-
-        # Create main detection tab
-        main_frame = ttk.Frame(self.notebook, padding="10")
-        self.notebook.add(main_frame, text="Detection")
-
-        # Create image results tab
-        self.image_frame = ttk.Frame(self.notebook, padding="10")
-        self.notebook.add(self.image_frame, text="Detection Results")
-
-        # Create canvas for image display
-        self.image_canvas = tk.Canvas(
-            self.image_frame, width=800, height=600, bg="white"
-        )
-        self.image_canvas.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
-
-        # Make the image frame expandable
-        self.image_frame.rowconfigure(0, weight=1)
-        self.image_frame.columnconfigure(0, weight=1)
+        # Create main frame
+        main_frame = ttk.Frame(self.root, padding="10")
+        main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
         # Status Panel frame (right side)
         status_frame = ttk.Frame(self.root, padding="10", relief="ridge", borderwidth=1)
@@ -273,7 +255,6 @@ class SurgicalToolsGUI:
                     )  # Debug print
                     if Path(predicted_image_path).is_file():
                         self.display_image(predicted_image_path)
-                        self.notebook.select(1)  # Switch to the image tab
                     else:
                         messagebox.showerror(
                             "Error",
