@@ -9,9 +9,10 @@ class SurgicalToolsGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Surgical Tools Detection")
-        self.root.geometry("600x400")
+        self.root.geometry("800x400")  # Made window wider for status panel
         self.root.rowconfigure(0, weight=1)  # Make the main window resizable
         self.root.columnconfigure(0, weight=1)
+        self.root.columnconfigure(1, weight=0)  # Status panel column
         
         # Load config to get set types
         try:
@@ -29,6 +30,17 @@ class SurgicalToolsGUI:
         # Main frame
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        # Status Panel frame (right side)
+        status_frame = ttk.Frame(self.root, padding="10", relief="ridge", borderwidth=1)
+        status_frame.grid(row=0, column=1, sticky=(tk.W, tk.E, tk.N, tk.S), padx=5)
+        
+        # Status display
+        ttk.Label(status_frame, text="Missing Items", font=('Helvetica', 14, 'bold')).pack(pady=5)
+        self.missing_count_label = ttk.Label(status_frame, text="0", 
+                                           font=('Helvetica', 36, 'bold'), 
+                                           foreground='red')
+        self.missing_count_label.pack(pady=10)
         
         # Make main_frame expandable
         main_frame.rowconfigure(4, weight=1)  # Make row with results text expandable
@@ -126,9 +138,12 @@ class SurgicalToolsGUI:
             # Display set completion status
             self.results_text.insert(tk.END, f"\nSet Complete: {result['set_complete']}\n")
             
+            # Update missing items count and display
+            total_missing = len(result.get('missing_items', []))
+            self.missing_count_label.configure(text=str(total_missing))
+            
             # Display missing items if any
             if result['missing_items']:
-                total_missing = len(result['missing_items'])
                 self.results_text.insert(tk.END, "\nMissing Items ", "red")
                 self.results_text.insert(tk.END, f"(Total: {total_missing}):\n", "red")
                 for item in result['missing_items']:
