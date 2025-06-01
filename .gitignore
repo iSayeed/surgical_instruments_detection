@@ -21,6 +21,7 @@ wheels/
 Surgical-Tools-Detection-1/
 crack_detection/
 datasets/
+runs/detect/pre*
 
 # pt files 
 *.pt

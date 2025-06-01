@@ -10,6 +10,8 @@ class SurgicalToolsGUI:
         self.root = root
         self.root.title("Surgical Tools Detection")
         self.root.geometry("600x400")
+        self.root.rowconfigure(0, weight=1)  # Make the main window resizable
+        self.root.columnconfigure(0, weight=1)
         
         # Load config to get set types
         try:
@@ -27,6 +29,20 @@ class SurgicalToolsGUI:
         # Main frame
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        # Make main_frame expandable
+        main_frame.rowconfigure(4, weight=1)  # Make row with results text expandable
+        main_frame.columnconfigure(1, weight=1)  # Make middle column expandable
+        
+        # Configure text tags for colors
+        self.results_text = tk.Text(main_frame, height=10, width=50, wrap=tk.WORD)
+        self.results_text.tag_configure("red", foreground="red")
+        self.results_text.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        # Add scrollbar to results text
+        scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=self.results_text.yview)
+        scrollbar.grid(row=4, column=3, sticky=(tk.N, tk.S))
+        self.results_text.configure(yscrollcommand=scrollbar.set)
 
         # Set Type Selection
         ttk.Label(main_frame, text="Set Type:").grid(row=0, column=0, sticky=tk.W, pady=5)
@@ -53,12 +69,7 @@ class SurgicalToolsGUI:
         ttk.Button(main_frame, text="Detect Tools", command=self.submit).grid(
             row=3, column=0, columnspan=3, pady=20)
 
-        # Results Area
-        self.results_text = tk.Text(main_frame, height=10, width=50)
-        self.results_text.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E))
-        
-        # Configure grid
-        main_frame.columnconfigure(1, weight=1)
+        # Grid configuration is already handled at the top of create_widgets
 
     def browse_image(self):
         filename = filedialog.askopenfilename(
@@ -117,11 +128,14 @@ class SurgicalToolsGUI:
             
             # Display missing items if any
             if result['missing_items']:
-                self.results_text.insert(tk.END, "\nMissing Items:\n")
+                total_missing = len(result['missing_items'])
+                self.results_text.insert(tk.END, "\nMissing Items ", "red")
+                self.results_text.insert(tk.END, f"(Total: {total_missing}):\n", "red")
                 for item in result['missing_items']:
                     self.results_text.insert(
                         tk.END,
-                        f"- {item['type']}: Found {item['found']}, Expected {item['expected']}\n"
+                        f"- {item['type']}: Found {item['found']}, Expected {item['expected']}\n",
+                        "red"
                     )
 
         except requests.RequestException as e:
