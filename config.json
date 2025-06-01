@@ -1,0 +1,62 @@
+{
+    "SURGICAL_INSTRUMENTS": {
+        "0": "Mayo-Hegar needle holder",
+        "1": "Adson tissue forceps (plain thumb forceps)",
+        "2": "Sponge-holding (Foerster) forceps",
+        "3": "Kelly hemostat (straight)",
+        "4": "DeBakey tissue forceps",
+        "5": "Mosquito hemostat (straight)",
+        "6": "Weitlaner self-retaining retractor",
+        "7": "Surgical scissors (e.g. Metzenbaum/Mayo scissors)",
+        "8": "Kelly hemostat (curved)",
+        "9": "Mixter (right-angle) hemostat",
+        "10": "Bone hook",
+        "11": "Lister (bandage) scissors",
+        "12": "Tissue forceps (dressing forceps)",
+        "13": "Kocher (Ochsner) forceps",
+        "14": "Frazier suction tip",
+        "15": "Electrocautery (\"Bovie\") pencil",
+        "16": "Scalpel (No. 3 handle with blade)",
+        "17": "Kelly hemostat (long)"
+    },
+    "REFERENCE_DATA": {
+    "basic_set": [
+        {
+            "type": "Scalpel (No. 3 handle with blade)",
+            "expected_count": 1
+        },
+        {
+            "type": "Scalpel blade",
+            "expected_count": 1
+        },
+        {
+            "type": "Probe",
+            "expected_count": 1
+        },
+        {
+            "type": "Mayo-Hegar needle holder",
+            "expected_count": 1
+        },
+        {
+            "type": "Kelly hemostat (straight)",
+            "expected_count": 1
+        },
+        {
+            "type": "Kelly hemostat (curved)",
+            "expected_count": 1
+        },
+        {
+            "type": "Surgical scissors (Metzenbaum/Mayo scissors)",
+            "expected_count": 2
+        },
+        {
+            "type": "Adson tissue forceps (plain thumb forceps)",
+            "expected_count": 1
+        },
+        {
+            "type": "Skin hook",
+            "expected_count": 1
+        }
+    ]
+}
+}
