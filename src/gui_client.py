@@ -3,7 +3,8 @@ from tkinter import ttk, filedialog, messagebox
 import requests
 from pathlib import Path
 import json
-from PIL import Image, ImageTk  # Add PIL import
+import traceback
+from PIL import Image  # PIL for image processing
 
 
 class SurgicalToolsGUI:
@@ -42,8 +43,14 @@ class SurgicalToolsGUI:
         self.notebook.add(self.image_frame, text="Detection Results")
 
         # Create canvas for image display
-        self.image_canvas = tk.Canvas(self.image_frame)
-        self.image_canvas.pack(expand=True, fill=tk.BOTH)
+        self.image_canvas = tk.Canvas(
+            self.image_frame, width=800, height=600, bg="white"
+        )
+        self.image_canvas.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
+
+        # Make the image frame expandable
+        self.image_frame.rowconfigure(0, weight=1)
+        self.image_frame.columnconfigure(0, weight=1)
 
         # Status Panel frame (right side)
         status_frame = ttk.Frame(self.root, padding="10", relief="ridge", borderwidth=1)
@@ -121,48 +128,79 @@ class SurgicalToolsGUI:
 
     def display_image(self, image_path):
         try:
-            # Open image
+            print(f"Loading image from: {image_path}")
+
+            # Verify image path
+            image_path = str(image_path)  # Convert Path to string if needed
+            if not Path(image_path).exists():
+                raise ValueError(f"Image file does not exist: {image_path}")
+
+            # Create a new Toplevel window for the image
+            image_window = tk.Toplevel(self.root)
+            image_window.title("Detection Results")
+
+            # Create a label to display the image
+            image_label = ttk.Label(image_window)
+            image_label.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
+
+            # Open and process image
             image = Image.open(image_path)
+            print(f"Original image size: {image.size}")
 
-            # Update the canvas size to fill available space
-            self.image_canvas.update()
-            canvas_width = self.image_canvas.winfo_width()
-            canvas_height = self.image_canvas.winfo_height()
+            # Convert to RGB if needed
+            if image.mode not in ("RGB", "RGBA"):
+                image = image.convert("RGB")
 
-            # Get image dimensions
+            # Get screen dimensions
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
+
+            # Calculate maximum dimensions (80% of screen size)
+            max_width = int(screen_width * 0.8)
+            max_height = int(screen_height * 0.8)
+
+            # Get original dimensions
             img_width, img_height = image.size
 
-            # Calculate the scaling ratio to fit the canvas while maintaining aspect ratio
-            width_ratio = canvas_width / img_width
-            height_ratio = canvas_height / img_height
+            # Calculate scaling ratio
+            width_ratio = max_width / img_width
+            height_ratio = max_height / img_height
             ratio = min(width_ratio, height_ratio)
 
             # Calculate new dimensions
             new_width = int(img_width * ratio)
             new_height = int(img_height * ratio)
+            print(f"Resizing to: {new_width}x{new_height}")
 
-            if new_width > 0 and new_height > 0:
-                # Resize image
-                image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            # Resize image
+            image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
-                # Convert to PhotoImage and store reference
-                self.current_image = ImageTk.PhotoImage(image)
+            # Save to temporary PNG file (PNG works better with Tkinter)
+            temp_path = Path(image_path).parent / "temp_display.png"
+            image.save(temp_path, format="PNG")
 
-                # Clear previous image
-                self.image_canvas.delete("all")
+            # Create PhotoImage directly from file
+            self.current_image = tk.PhotoImage(file=str(temp_path))
+            print("Created PhotoImage")
 
-                # Calculate position to center the image
-                x = (canvas_width - new_width) // 2
-                y = (canvas_height - new_height) // 2
+            # Display image in label
+            image_label.configure(image=self.current_image)
 
-                # Display new image
-                self.image_canvas.create_image(
-                    x,
-                    y,
-                    image=self.current_image,
-                    anchor="nw",  # Northwest alignment for precise positioning
-                )
+            # Set window size and position
+            window_width = new_width + 20  # Add padding
+            window_height = new_height + 20
+            x = (screen_width - window_width) // 2
+            y = (screen_height - window_height) // 2
+            image_window.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+            print("Image displayed in new window")
+
+            # Clean up temporary file
+            temp_path.unlink()
+
         except Exception as e:
+            print("Full error:")
+            print(traceback.format_exc())
             messagebox.showerror("Error", f"Failed to display image: {str(e)}")
 
     def submit(self):
