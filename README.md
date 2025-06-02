@@ -113,5 +113,5 @@ uv run src/gui_client.py
 ## Additional Notes
 - All code is formatted and linted using `ruff`.
 - The `config.json` file includes a reference to a surgical tray with instrument name and number, which is assumed be known before an operation. The dataset used for training identifies surgical instruments using integer labels from 0 to 17. A mapping between these numbers and instrument names is provided in the project to help interpret detection results.
-
+- The best trained model's path (folder name like train9) should be decleared in the config
 
