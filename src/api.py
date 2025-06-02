@@ -63,7 +63,7 @@ def save_session_data(
     predicted_image: Path,
     set_type: str,
     operation_type: str,
-    actual_weight: float,
+    weight_input: float,
     detection_result: dict,
 ) -> dict:
     """
@@ -74,7 +74,7 @@ def save_session_data(
         predicted_image: Path to the predicted image
         set_type: Type of surgical set
         operation_type: Type of operation
-        actual_weight: Weight measurement
+        weight_input: Weight measurement from input
         detection_result: Detection results from model
 
     Returns:
@@ -101,7 +101,7 @@ def save_session_data(
         "timestamp": timestamp,
         "set_type": set_type,
         "operation_type": operation_type,
-        "actual_weight": actual_weight,
+        "weight_input": weight_input,
         "original_image": str(orig_path),
         "predicted_image": str(pred_path),
         "detection_results": detection_result,
@@ -113,13 +113,13 @@ def save_session_data(
 
     return session_data
 
-def check_weight_mismatch(ref_data: list, actual_weight: float) -> dict | None:
+def check_weight_mismatch(ref_data: list, weight_input: float) -> dict | None:
     """
-    Check if the actual weight matches the expected weight from reference data.
+    Check if the input weight matches the expected weight from reference data.
 
     Args:
         ref_data: List of expected items including weight
-        actual_weight: The actual measured weight
+        weight_input: The measured weight from input
 
     Returns:
         Dict with mismatch details if weight doesn't match, None otherwise
@@ -130,20 +130,20 @@ def check_weight_mismatch(ref_data: list, actual_weight: float) -> dict | None:
         return None
 
     expected_weight = float(weight_item["weight"].replace(" kg", ""))
-    if actual_weight != expected_weight:
+    if weight_input != expected_weight:
         return {
             "type": "Weight",
             "expected": expected_weight,
-            "found": actual_weight,
+            "found": weight_input,
         }
 
-    logger.info(f"Weight matches expected: {actual_weight} kg")
+    logger.info(f"Weight matches expected: {weight_input} kg")
     return None
 
 @app.post("/infer")
 async def infer(
     set_type: Annotated[str, Form()],
-    actual_weight: Annotated[float, Form()],
+    weight_input: Annotated[float, Form()],
     operation_type: Annotated[str, Form()],
     image: Annotated[UploadFile, File()],
 ) -> JSONResponse:
@@ -152,7 +152,7 @@ async def infer(
 
     Args:
         set_type: Type of surgical set to validate against
-        actual_weight: Weight of the surgical set
+        weight_input: Weight of the surgical set
         operation_type: Type of operation being performed
         image: Uploaded image file for detection
 
@@ -225,7 +225,7 @@ async def infer(
             predicted_image=pred_path,
             set_type=set_type,
             operation_type=operation_type,
-            actual_weight=actual_weight,
+            weight_input=weight_input,
             detection_result=detection_result,
         )
 
@@ -252,7 +252,7 @@ async def infer(
         missing_items = []
 
         # Check weight mismatch
-        weight_mismatch = check_weight_mismatch(ref_data, actual_weight)
+        weight_mismatch = check_weight_mismatch(ref_data, weight_input)
         if weight_mismatch:
             missing_items.append(weight_mismatch)
 

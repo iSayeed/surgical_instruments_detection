@@ -329,7 +329,7 @@ class SurgicalToolsGUI:
         }
         data = {
             "set_type": self.set_type.get(),
-            "actual_weight": weight,
+            "weight_input": weight,
             "operation_type": self.operation_type_var.get(),
         }
 
