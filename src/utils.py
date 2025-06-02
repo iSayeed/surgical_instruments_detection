@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 from pathlib import Path
 
 import cv2
-import numpy as np
 from loguru import logger
 
 if TYPE_CHECKING:
