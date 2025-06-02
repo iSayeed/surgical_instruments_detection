@@ -22,6 +22,11 @@ ignore = [
     "EM102",
     "EM101",
     "TRY301",
+    "PTH123",
+    "BLE001",
+    "RUF010",
+    "C901",
+    "SIM115",
 ]
 extend-safe-fixes = [
     "D400",  # First line should end with a period
