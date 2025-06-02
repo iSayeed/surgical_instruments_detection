@@ -1,12 +1,24 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, Form
-from fastapi.responses import JSONResponse
-from pathlib import Path
-from pydantic import BaseModel
-import tempfile
+import sys
 import json
-from ultralytics import YOLO
+import tempfile
+from typing import Annotated
+from pathlib import Path
 
-from .utils import predict_image, display_surgical_detections
+from loguru import logger
+from fastapi import File
+from fastapi import Form
+from fastapi import FastAPI
+from fastapi import UploadFile
+from fastapi import HTTPException
+from pydantic import BaseModel
+from ultralytics import YOLO
+from fastapi.responses import JSONResponse
+
+from .utils import predict_image
+from .utils import display_surgical_detections
+
+# Configure logger
+logger.add(sys.stderr, format="{time} {level} {message}", level="INFO")
 
 # Initialize FastAPI app
 app = FastAPI(title="Surgical Tools Detection API")
@@ -18,7 +30,7 @@ model = YOLO(MODEL_PATH)
 # Load reference data and instrument mapping from config.json
 CONFIG_PATH = Path(__file__).parent.parent / "config.json"
 try:
-    with open(CONFIG_PATH) as f:
+    with CONFIG_PATH.open() as f:
         config = json.load(f)
         REFERENCE_DATA = config["REFERENCE_DATA"]
         SURGICAL_INSTRUMENTS = config["SURGICAL_INSTRUMENTS"]
@@ -31,16 +43,30 @@ except KeyError as e:
 
 
 class InferenceRequest(BaseModel):
+    """Request model for surgical tool inference."""
+
     set_type: str
-    actual_weight: float
+    actual_weight: float  # Required for future weight validation
 
 
 @app.post("/infer")
 async def infer(
-    set_type: str = Form(...),
-    actual_weight: float = Form(...),
-    image: UploadFile = File(...),
-):
+    set_type: Annotated[str, Form()],
+    actual_weight: Annotated[float, Form()],  # Required for future weight validation
+    image: Annotated[UploadFile, File()],
+) -> JSONResponse:
+    """
+    Process uploaded image for surgical tool detection and validation.
+
+    Args:
+        set_type: Type of surgical set to validate against
+        actual_weight: Weight of the surgical set
+        image: Uploaded image file for detection
+
+    Returns:
+        JSONResponse containing detection results and validation status
+
+    """
     try:
         # Validate set type
         if set_type not in REFERENCE_DATA:
@@ -55,8 +81,8 @@ async def infer(
                 status_code=400,
                 detail="Invalid image format. Only PNG, JPG, and JPEG are allowed.",
             )
-        else:
-            print(f"Received image: {image.filename}")
+
+        logger.info(f"Received image: {image.filename}")
 
         # Save uploaded image to a temporary file
         with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_image:
@@ -69,7 +95,7 @@ async def infer(
             model=model,
             image_path=temp_image_path,
             conf_threshold=0.1,
-            save=True,  # Save the detection results
+            save=True,
             show=False,
         )
 
@@ -87,7 +113,7 @@ async def infer(
             raise HTTPException(status_code=500, detail="No prediction folders found")
 
         latest_pred_folder = pred_folders[-1]
-        print(f"Looking for predictions in: {latest_pred_folder}")  # Debug print
+        logger.info(f"Looking for predictions in: {latest_pred_folder}")
 
         # Get the prediction image from the latest folder
         pred_path = next(latest_pred_folder.glob("*.jpg"), None)
@@ -102,7 +128,7 @@ async def infer(
 
         # Add the absolute predicted image path to the detection result
         detection_result["predicted_image_path"] = str(pred_path)
-        print(f"Found prediction image at: {pred_path}")  # Debug print
+        logger.info(f"Found prediction image at: {pred_path}")
 
         # Clean up temporary file
         Path(temp_image_path).unlink()
@@ -130,7 +156,7 @@ async def infer(
                         "type": expected_type,
                         "expected": expected_count,
                         "found": detected_count,
-                    }
+                    },
                 )
 
         response = {
@@ -138,22 +164,21 @@ async def infer(
             "expected_instruments": expected_instruments,
             "set_complete": len(missing_items) == 0,
             "missing_items": missing_items,
-            "predicted_image_path": detection_result[
-                "predicted_image_path"
-            ],  # Add the image path to the response
+            "predicted_image_path": detection_result["predicted_image_path"],
         }
 
-        print(
-            f"Sending response with image path: {response['predicted_image_path']}"
-        )  # Debug print
+        logger.info(f"Sending response with image path: {response['predicted_image_path']}")
         return JSONResponse(content=response)
 
-    except Exception as e:
+    except HTTPException:
+        raise
+    except (OSError, ValueError) as e:
+        logger.error(f"Error processing request: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
     import uvicorn
-    from pathlib import Path
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    logger.warning("Running server with localhost")
+    uvicorn.run(app, host="127.0.0.1", port=8000)

@@ -1,10 +1,10 @@
-"""
-Utility functions for surgical instrument detection and visualization
-"""
-from pathlib import Path
+
 import json
+from pathlib import Path
+
 import cv2
 import numpy as np
+
 
 def load_config(config_path):
     """
