@@ -81,10 +81,8 @@ def save_session_data(
         Dictionary with saved file paths and session info
 
     """
-    # Create timestamp-based session directory
+    # Generate timestamp for the session
     timestamp = datetime.now(tz=timezone.utc).strftime("%Y%m%d_%H%M%S")
-    session_dir = SESSIONS_DIR / timestamp
-    session_dir.mkdir(exist_ok=True)
 
     # Save original image
     orig_name = f"{timestamp}_original{original_image.suffix}"
@@ -107,9 +105,26 @@ def save_session_data(
         "detection_results": detection_result,
     }
 
-    # Save session data as JSON
-    with open(session_dir / "session_data.json", "w") as f:
-        json.dump(session_data, f, indent=4)
+    # Path to the single sessions JSON file
+    sessions_file = SESSIONS_DIR / "sessions.json"
+
+    # Load existing sessions or create new file
+    if sessions_file.exists():
+        try:
+            with open(sessions_file) as f:
+                sessions = json.load(f)
+        except json.JSONDecodeError:
+            # If file is corrupted, start fresh
+            sessions = {"sessions": []}
+    else:
+        sessions = {"sessions": []}
+
+    # Append new session data
+    sessions["sessions"].append(session_data)
+
+    # Save updated sessions data
+    with open(sessions_file, "w") as f:
+        json.dump(sessions, f, indent=4)
 
     return session_data
 
