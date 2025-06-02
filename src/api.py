@@ -234,29 +234,11 @@ async def infer(
         # Use display_surgical_detections to process results and get detections
         detection_result = display_surgical_detections(results, SURGICAL_INSTRUMENTS)
 
-        # Save session data and get updated paths
-        session_data = save_session_data(
-            original_image=Path(temp_image_path),
-            predicted_image=pred_path,
-            set_type=set_type,
-            operation_type=operation_type,
-            weight_input=weight_input,
-            detection_result=detection_result,
-        )
-
-        # Update the detection result with the new predicted image path
-        detection_result["predicted_image_path"] = session_data["predicted_image"]
-        logger.info(f"Found prediction image at: {pred_path}")
-
-        # Clean up temporary file
-        Path(temp_image_path).unlink()
-
+        # First calculate missing items
         # Get reference data and expected instruments
         ref_data = REFERENCE_DATA[set_type]
-
-        # Filter out the weight entry from expected instruments
         expected_instruments = [item for item in ref_data if "type" in item]
-
+        
         # Create a map of detected instruments for easy lookup
         detected_map = {
             item["type"]: item["count"]
@@ -284,6 +266,29 @@ async def infer(
                         "found": detected_count,
                     },
                 )
+
+        # Add missing items to detection result
+        detection_result["missing_items"] = missing_items
+        detection_result["set_complete"] = len(missing_items) == 0
+
+        # Save session data and get updated paths
+        session_data = save_session_data(
+            original_image=Path(temp_image_path),
+            predicted_image=pred_path,
+            set_type=set_type,
+            operation_type=operation_type,
+            weight_input=weight_input,
+            detection_result=detection_result,
+        )
+
+        # Update the detection result with the new predicted image path
+        detection_result["predicted_image_path"] = session_data["predicted_image"]
+        logger.info(f"Found prediction image at: {pred_path}")
+
+        # Clean up temporary file
+        Path(temp_image_path).unlink()
+
+        # Use the previously calculated data
 
         response = {
             "detected_instruments": detection_result["detected_instruments"],
