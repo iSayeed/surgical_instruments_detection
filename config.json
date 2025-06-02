@@ -50,7 +50,7 @@
             "expected_count": 1
         },
         {
-            "type": "Surgical scissors (Metzenbaum/Mayo scissors)",
+            "type": "Surgical scissors (e.g. Metzenbaum/Mayo scissors)",
             "expected_count": 2
         },
         {
@@ -63,6 +63,126 @@
         }, 
         {
             "weight": "2 kg"
+        }
+    ],
+    "vascular_set": [
+        {
+            "type": "DeBakey tissue forceps",
+            "expected_count": 2
+        },
+        {
+            "type": "Kelly hemostat (straight)",
+            "expected_count": 4
+        },
+        {
+            "type": "Kelly hemostat (curved)",
+            "expected_count": 4
+        },
+        {
+            "type": "Surgical scissors (e.g. Metzenbaum/Mayo scissors)",
+            "expected_count": 2
+        },
+        {
+            "type": "Mayo-Hegar needle holder",
+            "expected_count": 2
+        },
+        {
+            "type": "Mixter (right-angle) hemostat",
+            "expected_count": 2
+        },
+        {
+            "type": "Mosquito hemostat (straight)",
+            "expected_count": 4
+        },
+        {
+            "weight": "3.5 kg"
+        }
+    ],
+    "orthopedic_set": [
+        {
+            "type": "Bone hook",
+            "expected_count": 2
+        },
+        {
+            "type": "Kelly hemostat (straight)",
+            "expected_count": 6
+        },
+        {
+            "type": "Kocher (Ochsner) forceps",
+            "expected_count": 4
+        },
+        {
+            "type": "Surgical scissors (e.g. Metzenbaum/Mayo scissors)",
+            "expected_count": 2
+        },
+        {
+            "type": "Weitlaner self-retaining retractor",
+            "expected_count": 2
+        },
+        {
+            "type": "Mayo-Hegar needle holder",
+            "expected_count": 2
+        },
+        {
+            "weight": "4 kg"
+        }
+    ],
+    "minor_surgery_set": [
+        {
+            "type": "Scalpel (No. 3 handle with blade)",
+            "expected_count": 1
+        },
+        {
+            "type": "Kelly hemostat (straight)",
+            "expected_count": 2
+        },
+        {
+            "type": "Tissue forceps (dressing forceps)",
+            "expected_count": 2
+        },
+        {
+            "type": "Surgical scissors (e.g. Metzenbaum/Mayo scissors)",
+            "expected_count": 1
+        },
+        {
+            "type": "Adson tissue forceps (plain thumb forceps)",
+            "expected_count": 1
+        },
+        {
+            "type": "Sponge-holding (Foerster) forceps",
+            "expected_count": 2
+        },
+        {
+            "weight": "1.5 kg"
+        }
+    ],
+    "electrosurgery_set": [
+        {
+            "type": "Electrocautery (\"Bovie\") pencil",
+            "expected_count": 2
+        },
+        {
+            "type": "Kelly hemostat (straight)",
+            "expected_count": 4
+        },
+        {
+            "type": "Kelly hemostat (long)",
+            "expected_count": 2
+        },
+        {
+            "type": "Frazier suction tip",
+            "expected_count": 2
+        },
+        {
+            "type": "DeBakey tissue forceps",
+            "expected_count": 2
+        },
+        {
+            "type": "Surgical scissors (e.g. Metzenbaum/Mayo scissors)",
+            "expected_count": 2
+        },
+        {
+            "weight": "2.5 kg"
         }
     ]
 }
