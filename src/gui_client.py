@@ -66,6 +66,13 @@ class SurgicalToolsGUI:
             status_frame, text="0", font=("Helvetica", 36, "bold"), foreground="red")
         self.missing_count_label.pack(pady=10)
 
+        # Weight status display
+        ttk.Label(
+            status_frame, text="Weight", font=("Helvetica", 14, "bold")).pack(pady=5)
+        self.weight_label = ttk.Label(
+            status_frame, text="OK", font=("Helvetica", 36, "bold"), foreground="green")
+        self.weight_label.pack(pady=10)
+
         # Make main_frame expandable
         main_frame.rowconfigure(4, weight=1)  # Make row with results text expandable
         main_frame.columnconfigure(1, weight=1)  # Make middle column expandable
@@ -92,7 +99,7 @@ class SurgicalToolsGUI:
             self.set_type.set(next(iter(self.reference_data.keys())))
 
         # Actual Weight
-        ttk.Label(main_frame, text="Actual Weight:").grid(
+        ttk.Label(main_frame, text="Weight:").grid(
             row=1, column=0, sticky=tk.W, pady=5)
         self.weight_var = tk.StringVar(value="0.0")
         self.weight_entry = ttk.Entry(main_frame, textvariable=self.weight_var)
@@ -204,6 +211,87 @@ class SurgicalToolsGUI:
             logger.error(traceback.format_exc())
             messagebox.showerror("Error", f"Failed to display image: {str(e)}")
 
+    def update_status_displays(self, result: dict) -> tuple[list, list]:
+        """Update the status displays with detection results.
+        
+        Args:
+            result: The detection result from the server
+            
+        Returns:
+            Tuple of tool mismatches and weight mismatch
+        """
+        # Get counts of missing items and weight mismatches
+        weight_mismatch = next(
+            (item for item in result.get("missing_items", []) if item["type"] == "Weight"),
+            None,
+        )
+        tool_mismatches = [
+            item for item in result.get("missing_items", []) if item["type"] != "Weight"
+        ]
+        
+        # Update missing items count display
+        self.missing_count_label.configure(text=str(len(tool_mismatches)))
+        
+        # Update weight status display
+        if weight_mismatch:
+            self.weight_label.configure(
+                text=f"{weight_mismatch['found']}kg",
+                foreground="red",
+            )
+        else:
+            self.weight_label.configure(
+                text=f"{self.weight_var.get()}kg",
+                foreground="green",
+            )
+            
+        return tool_mismatches, weight_mismatch
+
+    def display_results_text(self, result: dict, tool_mismatches: list, weight_mismatch: dict | None) -> None:
+        """Display detection results in the text area.
+        
+        Args:
+            result: The detection result from the server
+            tool_mismatches: List of tool mismatches
+            weight_mismatch: Weight mismatch details if any
+        
+        """
+        self.results_text.delete(1.0, tk.END)
+        self.results_text.insert(tk.END, "Detection Results:\n\n")
+
+        # Display detected instruments
+        self.results_text.insert(tk.END, "Detected Instruments:\n")
+        for instrument in result["detected_instruments"]:
+            self.results_text.insert(
+                tk.END,
+                f"- {instrument['type']}: {instrument['count']}\n",
+            )
+
+        # Display set completion status
+        self.results_text.insert(
+            tk.END,
+            f"\nSet Complete: {result['set_complete']}\n",
+        )
+
+        # Display tool mismatches if any
+        if tool_mismatches:
+            self.results_text.insert(tk.END, "\nMissing Tools ", "red")
+            self.results_text.insert(tk.END, f"(Total: {len(tool_mismatches)}):\n", "red")
+            for item in tool_mismatches:
+                self.results_text.insert(
+                    tk.END,
+                    f"- {item['type']}: Found {item['found']}, Expected {item['expected']}\n",
+                    "red",
+                )
+                
+        # Display weight mismatch if any
+        if weight_mismatch:
+            self.results_text.insert(tk.END, "\nWeight Mismatch:\n", "red")
+            self.results_text.insert(
+                tk.END,
+                f"- Found: {weight_mismatch['found']}kg, Expected: {weight_mismatch['expected']}kg\n",
+                "red",
+            )
+
     def submit(self) -> None:
         """Handle the submission of the form, validate inputs, and send the detection request to the server."""
         if not self.image_path.get():
@@ -229,39 +317,11 @@ class SurgicalToolsGUI:
             response.raise_for_status()
 
             # Display results
-            self.results_text.delete(1.0, tk.END)
             result = response.json()
             logger.debug("Received response from server: {}", json.dumps(result, indent=2))
 
             # Format and display the results
-            self.results_text.insert(tk.END, "Detection Results:\n\n")
-
-            # Display detected instruments
-            self.results_text.insert(tk.END, "Detected Instruments:\n")
-            for instrument in result["detected_instruments"]:
-                self.results_text.insert(
-                    tk.END, f"- {instrument['type']}: {instrument['count']}\n",
-                )
-
-            # Display set completion status
-            self.results_text.insert(
-                tk.END, f"\nSet Complete: {result['set_complete']}\n",
-            )
-
-            # Update missing items count and display
-            total_missing = len(result.get("missing_items", []))
-            self.missing_count_label.configure(text=str(total_missing))
-
-            # Display missing items if any
-            if result["missing_items"]:
-                self.results_text.insert(tk.END, "\nMissing Items ", "red")
-                self.results_text.insert(tk.END, f"(Total: {total_missing}):\n", "red")
-                for item in result["missing_items"]:
-                    self.results_text.insert(
-                        tk.END,
-                        f"- {item['type']}: Found {item['found']}, Expected {item['expected']}\n",
-                        "red",
-                    )
+            self.display_results_text(result, *self.update_status_displays(result))
 
             # Display the detected image and switch to the image tab
             if "predicted_image_path" in result:

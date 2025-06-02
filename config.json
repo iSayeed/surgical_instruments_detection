@@ -19,6 +19,10 @@
         "16": "Scalpel (No. 3 handle with blade)",
         "17": "Kelly hemostat (long)"
     },
+    "BEST_MODEL":{
+        "folder_name": "train9"
+    }, 
+
     "REFERENCE_DATA": {
     "basic_set": [
         {

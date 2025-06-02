@@ -25,9 +25,6 @@ logger.add(sys.stderr, format="{time} {level} {message}", level="INFO")
 # Initialize FastAPI app
 app = FastAPI(title="Surgical Tools Detection API")
 
-# Load YOLO model
-MODEL_PATH = Path("runs/detect/train9/weights/best.pt")
-model = YOLO(MODEL_PATH)
 
 # Load reference data and instrument mapping from config.json
 CONFIG_PATH = Path(__file__).parent.parent / "config.json"
@@ -36,6 +33,7 @@ try:
         config = json.load(f)
         REFERENCE_DATA = config["REFERENCE_DATA"]
         SURGICAL_INSTRUMENTS = config["SURGICAL_INSTRUMENTS"]
+        BEST_MODEL = config["BEST_MODEL"] # {"Foldar_path": "train9"}
 except FileNotFoundError:
     raise RuntimeError(f"Config file not found at {CONFIG_PATH}")
 except json.JSONDecodeError:
@@ -43,6 +41,9 @@ except json.JSONDecodeError:
 except KeyError as e:
     raise RuntimeError(f"Missing required key in config.json: {e}")
 
+# Load YOLO model
+MODEL_PATH = Path(f"runs/detect/{BEST_MODEL['folder_name']}/weights/best.pt")
+model = YOLO(MODEL_PATH)
 
 class InferenceRequest(BaseModel):
     """Request model for surgical tool inference."""
