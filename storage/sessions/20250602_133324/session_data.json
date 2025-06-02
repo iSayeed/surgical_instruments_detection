@@ -1,0 +1,28 @@
+{
+    "timestamp": "20250602_133324",
+    "set_type": "basic_set",
+    "operation_type": "jf",
+    "actual_weight": 1.0,
+    "original_image": "/Users/anassyed/Documents/lynqo/storage/uploads/20250602_133324_original.jpg",
+    "predicted_image": "/Users/anassyed/Documents/lynqo/storage/predictions/20250602_133324_predicted.jpg",
+    "detection_results": {
+        "detected_instruments": [
+            {
+                "type": "Kelly hemostat (straight)",
+                "count": 4
+            },
+            {
+                "type": "Electrocautery (\"Bovie\") pencil",
+                "count": 4
+            },
+            {
+                "type": "Kocher (Ochsner) forceps",
+                "count": 2
+            },
+            {
+                "type": "DeBakey tissue forceps",
+                "count": 1
+            }
+        ]
+    }
+}

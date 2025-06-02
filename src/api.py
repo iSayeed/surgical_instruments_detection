@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import sys
 import json
+import shutil
 import tempfile
 from typing import Annotated
 from pathlib import Path
+from datetime import datetime
+from datetime import timezone
 
 from loguru import logger
 from fastapi import File
@@ -12,7 +15,6 @@ from fastapi import Form
 from fastapi import FastAPI
 from fastapi import UploadFile
 from fastapi import HTTPException
-from pydantic import BaseModel
 from ultralytics import YOLO
 from fastapi.responses import JSONResponse
 
@@ -25,6 +27,17 @@ logger.add(sys.stderr, format="{time} {level} {message}", level="INFO")
 # Initialize FastAPI app
 app = FastAPI(title="Surgical Tools Detection API")
 
+# Setup storage directories
+STORAGE_DIR = Path(__file__).parent.parent / "storage"
+UPLOADS_DIR = STORAGE_DIR / "uploads"
+PREDICTIONS_DIR = STORAGE_DIR / "predictions"
+SESSIONS_DIR = STORAGE_DIR / "sessions"
+
+# Create directories
+STORAGE_DIR.mkdir(exist_ok=True)
+UPLOADS_DIR.mkdir(exist_ok=True)
+PREDICTIONS_DIR.mkdir(exist_ok=True)
+SESSIONS_DIR.mkdir(exist_ok=True)
 
 # Load reference data and instrument mapping from config.json
 CONFIG_PATH = Path(__file__).parent.parent / "config.json"
@@ -33,7 +46,7 @@ try:
         config = json.load(f)
         REFERENCE_DATA = config["REFERENCE_DATA"]
         SURGICAL_INSTRUMENTS = config["SURGICAL_INSTRUMENTS"]
-        BEST_MODEL = config["BEST_MODEL"] # {"Foldar_path": "train9"}
+        BEST_MODEL = config["BEST_MODEL"]
 except FileNotFoundError:
     raise RuntimeError(f"Config file not found at {CONFIG_PATH}")
 except json.JSONDecodeError:
@@ -45,13 +58,60 @@ except KeyError as e:
 MODEL_PATH = Path(f"runs/detect/{BEST_MODEL['folder_name']}/weights/best.pt")
 model = YOLO(MODEL_PATH)
 
-class InferenceRequest(BaseModel):
-    """Request model for surgical tool inference."""
+def save_session_data(
+    original_image: Path,
+    predicted_image: Path,
+    set_type: str,
+    operation_type: str,
+    actual_weight: float,
+    detection_result: dict,
+) -> dict:
+    """
+    Save session data including images and detection results.
 
-    set_type: str
-    actual_weight: float  # Required for future weight validation
-    operation_type: str  # Type of operation being performed
+    Args:
+        original_image: Path to the original uploaded image
+        predicted_image: Path to the predicted image
+        set_type: Type of surgical set
+        operation_type: Type of operation
+        actual_weight: Weight measurement
+        detection_result: Detection results from model
 
+    Returns:
+        Dictionary with saved file paths and session info
+
+    """
+    # Create timestamp-based session directory
+    timestamp = datetime.now(tz=timezone.utc).strftime("%Y%m%d_%H%M%S")
+    session_dir = SESSIONS_DIR / timestamp
+    session_dir.mkdir(exist_ok=True)
+
+    # Save original image
+    orig_name = f"{timestamp}_original{original_image.suffix}"
+    orig_path = UPLOADS_DIR / orig_name
+    shutil.copy2(original_image, orig_path)
+
+    # Save predicted image
+    pred_name = f"{timestamp}_predicted{predicted_image.suffix}"
+    pred_path = PREDICTIONS_DIR / pred_name
+    shutil.copy2(predicted_image, pred_path)
+
+    # Prepare session data
+    session_data = {
+        "timestamp": timestamp,
+        "set_type": set_type,
+        "operation_type": operation_type,
+        "actual_weight": actual_weight,
+        "original_image": str(orig_path),
+        "predicted_image": str(pred_path),
+        "detection_results": detection_result,
+    }
+
+    # Save session data as JSON
+    with open(session_dir / "session_data.json", "w") as f:
+        json.dump(session_data, f, indent=4)
+
+    return session_data
 
 def check_weight_mismatch(ref_data: list, actual_weight: float) -> dict | None:
     """
@@ -79,7 +139,6 @@ def check_weight_mismatch(ref_data: list, actual_weight: float) -> dict | None:
 
     logger.info(f"Weight matches expected: {actual_weight} kg")
     return None
-
 
 @app.post("/infer")
 async def infer(
@@ -160,8 +219,18 @@ async def infer(
         # Use display_surgical_detections to process results and get detections
         detection_result = display_surgical_detections(results, SURGICAL_INSTRUMENTS)
 
-        # Add the absolute predicted image path to the detection result
-        detection_result["predicted_image_path"] = str(pred_path)
+        # Save session data and get updated paths
+        session_data = save_session_data(
+            original_image=Path(temp_image_path),
+            predicted_image=pred_path,
+            set_type=set_type,
+            operation_type=operation_type,
+            actual_weight=actual_weight,
+            detection_result=detection_result,
+        )
+
+        # Update the detection result with the new predicted image path
+        detection_result["predicted_image_path"] = session_data["predicted_image"]
         logger.info(f"Found prediction image at: {pred_path}")
 
         # Clean up temporary file
@@ -169,6 +238,7 @@ async def infer(
 
         # Get reference data and expected instruments
         ref_data = REFERENCE_DATA[set_type]
+
         # Filter out the weight entry from expected instruments
         expected_instruments = [item for item in ref_data if "type" in item]
 
@@ -217,7 +287,6 @@ async def infer(
     except (OSError, ValueError) as e:
         logger.error(f"Error processing request: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 if __name__ == "__main__":
     import uvicorn

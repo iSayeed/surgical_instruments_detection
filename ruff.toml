@@ -29,6 +29,7 @@ ignore = [
     "SIM115",
     "FBT001", 
     "FBT002",
+    "PRL0913",
 ]
 extend-safe-fixes = [
     "D400",  # First line should end with a period
