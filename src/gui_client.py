@@ -212,13 +212,15 @@ class SurgicalToolsGUI:
             messagebox.showerror("Error", f"Failed to display image: {str(e)}")
 
     def update_status_displays(self, result: dict) -> tuple[list, list]:
-        """Update the status displays with detection results.
-        
+        """
+        Update the status displays with detection results.
+
         Args:
             result: The detection result from the server
-            
+
         Returns:
             Tuple of tool mismatches and weight mismatch
+
         """
         # Get counts of missing items and weight mismatches
         weight_mismatch = next(
@@ -228,32 +230,36 @@ class SurgicalToolsGUI:
         tool_mismatches = [
             item for item in result.get("missing_items", []) if item["type"] != "Weight"
         ]
-        
+
         # Update missing items count display
         self.missing_count_label.configure(text=str(len(tool_mismatches)))
-        
+
         # Update weight status display
         if weight_mismatch:
+            # Calculate the difference (actual - expected)
+            difference = float(weight_mismatch["found"]) - float(weight_mismatch["expected"])
+            sign = "+" if difference > 0 else ""  # Only show + for positive numbers
             self.weight_label.configure(
-                text=f"{weight_mismatch['found']}kg",
+                text=f"{sign}{difference:.1f}kg",
                 foreground="red",
             )
         else:
             self.weight_label.configure(
-                text=f"{self.weight_var.get()}kg",
+                text="0.0kg",
                 foreground="green",
             )
-            
+
         return tool_mismatches, weight_mismatch
 
     def display_results_text(self, result: dict, tool_mismatches: list, weight_mismatch: dict | None) -> None:
-        """Display detection results in the text area.
-        
+        """
+        Display detection results in the text area.
+
         Args:
             result: The detection result from the server
             tool_mismatches: List of tool mismatches
             weight_mismatch: Weight mismatch details if any
-        
+
         """
         self.results_text.delete(1.0, tk.END)
         self.results_text.insert(tk.END, "Detection Results:\n\n")
@@ -282,7 +288,7 @@ class SurgicalToolsGUI:
                     f"- {item['type']}: Found {item['found']}, Expected {item['expected']}\n",
                     "red",
                 )
-                
+
         # Display weight mismatch if any
         if weight_mismatch:
             self.results_text.insert(tk.END, "\nWeight Mismatch:\n", "red")
