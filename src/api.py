@@ -51,6 +51,34 @@ class InferenceRequest(BaseModel):
     actual_weight: float  # Required for future weight validation
 
 
+def check_weight_mismatch(ref_data: list, actual_weight: float) -> dict | None:
+    """
+    Check if the actual weight matches the expected weight from reference data.
+
+    Args:
+        ref_data: List of expected items including weight
+        actual_weight: The actual measured weight
+
+    Returns:
+        Dict with mismatch details if weight doesn't match, None otherwise
+
+    """
+    weight_item = next((item for item in ref_data if "weight" in item), None)
+    if not weight_item:
+        return None
+
+    expected_weight = float(weight_item["weight"].replace(" kg", ""))
+    if actual_weight != expected_weight:
+        return {
+            "type": "Weight",
+            "expected": expected_weight,
+            "found": actual_weight,
+        }
+
+    logger.info(f"Weight matches expected: {actual_weight} kg")
+    return None
+
+
 @app.post("/infer")
 async def infer(
     set_type: Annotated[str, Form()],
@@ -137,7 +165,8 @@ async def infer(
 
         # Get reference data and expected instruments
         ref_data = REFERENCE_DATA[set_type]
-        expected_instruments = ref_data
+        # Filter out the weight entry from expected instruments
+        expected_instruments = [item for item in ref_data if "type" in item]
 
         # Create a map of detected instruments for easy lookup
         detected_map = {
@@ -147,6 +176,12 @@ async def infer(
 
         # Check for missing or incorrect count items
         missing_items = []
+
+        # Check weight mismatch
+        weight_mismatch = check_weight_mismatch(ref_data, actual_weight)
+        if weight_mismatch:
+            missing_items.append(weight_mismatch)
+
         for expected in expected_instruments:
             expected_type = expected["type"]
             expected_count = expected["expected_count"]
