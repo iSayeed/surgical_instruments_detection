@@ -74,19 +74,31 @@ class SurgicalToolsGUI:
         self.weight_label.pack(pady=10)
 
         # Make main_frame expandable
-        main_frame.rowconfigure(4, weight=1)  # Make row with results text expandable
+        main_frame.rowconfigure(5, weight=1)  # Make row with results text expandable
         main_frame.columnconfigure(1, weight=1)  # Make middle column expandable
 
-        # Configure text tags for colors
+        # Image Selection
+        ttk.Label(main_frame, text="Image:").grid(row=3, column=0, sticky=tk.W, pady=5)
+        self.image_path = tk.StringVar()
+        ttk.Entry(main_frame, textvariable=self.image_path, state="readonly").grid(
+            row=3, column=1, sticky=(tk.W, tk.E), pady=5)
+        ttk.Button(main_frame, text="Browse", command=self.browse_image).grid(
+            row=3, column=2, sticky=tk.W, pady=5)
+
+        # Submit Button - Now at row 4
+        ttk.Button(main_frame, text="Detect Tools", command=self.submit).grid(
+            row=4, column=0, columnspan=3, pady=10)
+
+        # Configure text tags for colors - Now at row 5
         self.results_text = tk.Text(main_frame, height=10, width=50, wrap=tk.WORD)
         self.results_text.tag_configure("red", foreground="red")
         self.results_text.grid(
-            row=4, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S))
+            row=5, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S))
 
         # Add scrollbar to results text
         scrollbar = ttk.Scrollbar(
             main_frame, orient="vertical", command=self.results_text.yview)
-        scrollbar.grid(row=4, column=3, sticky=(tk.N, tk.S))
+        scrollbar.grid(row=5, column=3, sticky=(tk.N, tk.S))
         self.results_text.configure(yscrollcommand=scrollbar.set)
 
         # Set Type Selection
@@ -105,19 +117,16 @@ class SurgicalToolsGUI:
         self.weight_entry = ttk.Entry(main_frame, textvariable=self.weight_var)
         self.weight_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=5)
 
-        # Image Selection
-        ttk.Label(main_frame, text="Image:").grid(row=2, column=0, sticky=tk.W, pady=5)
-        self.image_path = tk.StringVar()
-        ttk.Entry(main_frame, textvariable=self.image_path, state="readonly").grid(
-            row=2, column=1, sticky=(tk.W, tk.E), pady=5)
-        ttk.Button(main_frame, text="Browse", command=self.browse_image).grid(
-            row=2, column=2, sticky=tk.W, pady=5)
+        # Operation Type
+        ttk.Label(main_frame, text="Operation Type:").grid(
+            row=2, column=0, sticky=tk.W, pady=5)
+        self.operation_type_var = tk.StringVar()
+        self.operation_type_entry = ttk.Entry(main_frame, textvariable=self.operation_type_var)
+        self.operation_type_entry.grid(row=2, column=1, sticky=(tk.W, tk.E), pady=5)
 
-        # Submit Button
-        ttk.Button(main_frame, text="Detect Tools", command=self.submit).grid(
-            row=3, column=0, columnspan=3, pady=20)
-
-        # Grid configuration is already handled at the top of create_widgets
+        # Update the rowconfigure for the results text
+        main_frame.rowconfigure(5, weight=1)  # Make row with results text expandable
+        main_frame.columnconfigure(1, weight=1)  # Make middle column expandable
 
     def browse_image(self) -> None:
         """Open a file dialog for selecting an image file and update the image path in the GUI."""
@@ -264,6 +273,10 @@ class SurgicalToolsGUI:
         self.results_text.delete(1.0, tk.END)
         self.results_text.insert(tk.END, "Detection Results:\n\n")
 
+        # Display operation type if available
+        if "operation_type" in result:
+            self.results_text.insert(tk.END, f"Operation Type: {result['operation_type']}\n\n")
+
         # Display detected instruments
         self.results_text.insert(tk.END, "Detected Instruments:\n")
         for instrument in result["detected_instruments"]:
@@ -314,7 +327,11 @@ class SurgicalToolsGUI:
         files = {
             "image": ("image.jpg", open(self.image_path.get(), "rb"), "image/jpeg"),
         }
-        data = {"set_type": self.set_type.get(), "actual_weight": weight}
+        data = {
+            "set_type": self.set_type.get(),
+            "actual_weight": weight,
+            "operation_type": self.operation_type_var.get(),
+        }
 
         try:
             # Make the request

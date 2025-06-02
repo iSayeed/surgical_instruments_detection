@@ -50,6 +50,7 @@ class InferenceRequest(BaseModel):
 
     set_type: str
     actual_weight: float  # Required for future weight validation
+    operation_type: str  # Type of operation being performed
 
 
 def check_weight_mismatch(ref_data: list, actual_weight: float) -> dict | None:
@@ -83,7 +84,8 @@ def check_weight_mismatch(ref_data: list, actual_weight: float) -> dict | None:
 @app.post("/infer")
 async def infer(
     set_type: Annotated[str, Form()],
-    actual_weight: Annotated[float, Form()],  # Required for future weight validation
+    actual_weight: Annotated[float, Form()],
+    operation_type: Annotated[str, Form()],
     image: Annotated[UploadFile, File()],
 ) -> JSONResponse:
     """
@@ -92,6 +94,7 @@ async def infer(
     Args:
         set_type: Type of surgical set to validate against
         actual_weight: Weight of the surgical set
+        operation_type: Type of operation being performed
         image: Uploaded image file for detection
 
     Returns:
@@ -203,6 +206,7 @@ async def infer(
             "set_complete": len(missing_items) == 0,
             "missing_items": missing_items,
             "predicted_image_path": detection_result["predicted_image_path"],
+            "operation_type": operation_type,
         }
 
         logger.info(f"Sending response with image path: {response['predicted_image_path']}")

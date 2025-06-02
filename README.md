@@ -24,11 +24,21 @@ This project uses [uv](https://github.com/astral-sh/uv) for fast Python dependen
 
 ```bash
 pip install uv
-uv init
 uv sync
 ```
 
 ---
+
+In the terminal activate the virtual environment 
+#### On macOS/Linux:
+```bash
+source .venv/bin/activate
+```
+
+#### On Windows:
+```bat
+.venv\Scripts\activate
+```
 
 ## Usage Workflow
 
