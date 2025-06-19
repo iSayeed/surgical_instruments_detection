@@ -1,7 +1,7 @@
-# Lynqo Surgical Instrument Detection
+#  Surgical Instrument Detection
 
 ## Project Overview
-Lynqo provides an end-to-end pipeline for surgical instrument detection using computer vision. The project covers data augmentation, model training (YOLO-based), an API for inference, and a user-friendly GUI client. 
+This project is an end-to-end pipeline for surgical instrument detection using computer vision. The project covers data augmentation, model training (YOLO-based), an API for inference, and a user-friendly GUI client. 
 
 ---
 
